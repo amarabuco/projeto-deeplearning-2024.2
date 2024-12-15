@@ -1,0 +1,51 @@
+---
+version: '3'
+services:
+
+  backtester_rl_chronos_mlflow:
+    # image: freqtradeorg/freqtrade:develop_freqairl
+    # # Enable GPU Image and GPU Resources (only relevant for freqAI)
+    # # Make sure to uncomment the whole deploy section
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Build step - only needed when additional dependencies are needed
+    build:
+      context: .
+      dockerfile: "./docker/Dockerfile.freqai_rl_chronos3"
+      args:
+        - PIP_DEFAULT_TIMEOUT=100
+        - PIP_RETRIES=3    
+    restart: unless-stopped
+    container_name: freqtrade-backtester_rl_chronos_mlflow
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # for more information.
+    ports:
+      - "127.0.0.1:8003:8080"    
+    # Default command used when running `docker compose up`
+    # --config /freqtrade/user_data/config/config_rl.json 
+     # --strategy RLStrategy
+     # list-freqaimodels
+      # webserver
+      #   --userdir /freqtrade/user_data/ 
+      #   --config /freqtrade/user_data/config/config_chronos_rl_a2c.json
+      # --enable-position-stacking
+    command: 
+      backtesting  
+      --userdir /freqtrade/user_data/ 
+      --freqaimodel-path /freqtrade/user_data/freqaimodels/prediction_models
+      --config /freqtrade/user_data/config/config_chronos_rl_rppo.json 
+      --strategy ChronosRLStrategy
+      --freqaimodel ChronosRLMLflow
+      --timerange 20240701-20241130
+      --export signals
+      --breakdown week month
+      --cache none
+      --export-filename=user_data/backtest_results/paper-rppo-1d.json

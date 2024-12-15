@@ -1,0 +1,21 @@
+# Use a imagem base oficial
+FROM freqtradeorg/freqtrade:develop_freqairl
+
+# Temporariamente alterne para o root para instalar o Git
+USER root
+
+# Instale o Git (e remova o cache para minimizar o tamanho da imagem)
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Volte ao usuário original (ftuser)
+USER ftuser
+
+# Execute o comando adicional para instalar o Chronos Forecasting
+RUN pip install --user git+https://github.com/amazon-science/chronos-forecasting.git
+RUN pip install --user mlflow
+
+# Defina o ponto de entrada e comando padrão
+ENTRYPOINT ["freqtrade"]
+CMD ["trade"]

@@ -1,0 +1,55 @@
+---
+version: '3'
+services:
+
+  tensorboard:
+    image: tensorflow/tensorflow
+    restart: unless-stopped
+    container_name: freqtrade-tensorboard
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    ports:
+      - "127.0.0.1:6006:6006"
+    command: >
+      tensorboard --logdir freqtrade/user_data/models/ --host 0.0.0.0 
+      
+
+  mlflow:
+    build:
+      context: ..
+      dockerfile: lab/docker/Dockerfile.admin
+    restart: unless-stopped
+    container_name: freqtrade-mlflow
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    working_dir: /freqtrade/user_data
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # for more information.
+    ports:
+      # - "127.0.0.1:8501:8501"
+      - "127.0.0.1:5000:5000"
+    # flask run
+      # jupyter lab --port=8888 --ip 0.0.0.0 --allow-root
+    command: >
+      mlflow ui --host 0.0.0.0
+
+  admin:
+    build:
+      context: ..
+      dockerfile: lab/docker/Dockerfile.admin
+    restart: unless-stopped
+    container_name: freqtrade-admin
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    working_dir: /freqtrade/user_data
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # for more information.
+    ports:
+      - "127.0.0.1:8501:8501"
+      # - "127.0.0.1:5000:5000"
+    # flask run
+      # jupyter lab --port=8888 --ip 0.0.0.0 --allow-root
+    command: >
+      streamlit run admin/app.py --server.address 0.0.0.0
